@@ -45,6 +45,7 @@ export interface CargoWorkspace {
 export interface CargoPackage {
   name?: string;
   version?: string;
+  publish?: boolean;
 }
 
 export interface CargoDependencies {
