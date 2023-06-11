@@ -150,14 +150,17 @@ export class CargoWorkspace extends WorkspacePlugin<CrateInfo> {
           `${this.github.repository.owner}/${this.github.repository.repo}`
         );
       }
-      allCrates.push({
-        path,
-        name: packageName,
-        version,
-        manifest,
-        manifestContent: manifestContent.parsedContent,
-        manifestPath,
-      });
+
+      if ((manifest.package?.publish ?? 'true') === 'true') {
+        allCrates.push({
+          path,
+          name: packageName,
+          version,
+          manifest,
+          manifestContent: manifestContent.parsedContent,
+          manifestPath,
+        });
+      }
     }
     return {
       allPackages: allCrates,
