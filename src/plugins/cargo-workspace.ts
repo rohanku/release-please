@@ -151,16 +151,14 @@ export class CargoWorkspace extends WorkspacePlugin<CrateInfo> {
         );
       }
 
-      if ((manifest.package?.publish ?? 'true') === 'true') {
-        allCrates.push({
-          path,
-          name: packageName,
-          version,
-          manifest,
-          manifestContent: manifestContent.parsedContent,
-          manifestPath,
-        });
-      }
+      allCrates.push({
+        path,
+        name: packageName,
+        version,
+        manifest,
+        manifestContent: manifestContent.parsedContent,
+        manifestPath,
+      });
     }
     return {
       allPackages: allCrates,
@@ -365,6 +363,14 @@ export class CargoWorkspace extends WorkspacePlugin<CrateInfo> {
 
   protected packageNameFromPackage(pkg: CrateInfo): string {
     return pkg.name;
+  }
+
+  protected packagePublishFromPackage(pkg: CrateInfo): boolean {
+    return pkg.manifest.package?.publish ?? true;
+  }
+
+  protected packageVersionFromPackage(pkg: CrateInfo): Version {
+    return Version.parse(pkg.version);
   }
 
   protected pathFromPackage(pkg: CrateInfo): string {

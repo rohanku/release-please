@@ -456,6 +456,15 @@ export class MavenWorkspace extends WorkspacePlugin<MavenArtifact> {
   protected packageNameFromPackage(artifact: MavenArtifact): string {
     return artifact.name;
   }
+
+  protected packagePublishFromPackage(artifact: MavenArtifact): boolean {
+    return true;
+  }
+
+  protected packageVersionFromPackage(artifact: MavenArtifact): Version {
+    return Version.parse(artifact.version);
+  }
+
   protected pathFromPackage(artifact: MavenArtifact): string {
     return artifact.path;
   }

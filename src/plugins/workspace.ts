@@ -263,8 +263,11 @@ export abstract class WorkspacePlugin<T> extends ManifestPlugin {
         this.logger.debug(`version: ${version} from release-please`);
         updatedVersions.set(packageName, version);
       } else {
-        const version = this.bumpVersion(pkg);
-        this.logger.debug(`version: ${version} forced bump`);
+        let version = this.packageVersionFromPackage(pkg);
+        if (this.packagePublishFromPackage(pkg)) {
+          version = this.bumpVersion(pkg);
+          this.logger.debug(`version: ${version} forced bump`);
+        }
         updatedVersions.set(packageName, version);
         if (this.isReleaseVersion(version)) {
           updatedPathVersions.set(this.pathFromPackage(pkg), version);
@@ -355,6 +358,20 @@ export abstract class WorkspacePlugin<T> extends ManifestPlugin {
    * @returns {string} The package name.
    */
   protected abstract packageNameFromPackage(pkg: T): string;
+
+  /**
+   * Given a package, return whether the package should be published.
+   * @param {T} pkg The package definition.
+   * @returns {boolean} Whether the package should be published.
+   */
+  protected abstract packagePublishFromPackage(pkg: T): boolean;
+
+  /**
+   * Given a package, return whether the package version of the package.
+   * @param {T} pkg The package definition.
+   * @returns {Version} The package version.
+   */
+  protected abstract packageVersionFromPackage(pkg: T): Version;
 
   /**
    * Given a package, return the path in the repo to the package.

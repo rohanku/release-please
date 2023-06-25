@@ -352,6 +352,14 @@ export class NodeWorkspace extends WorkspacePlugin<Package> {
     return pkg.name;
   }
 
+  protected packagePublishFromPackage(pkg: Package): boolean {
+    return true;
+  }
+
+  protected packageVersionFromPackage(pkg: Package): Version {
+    return Version.parse(pkg.version);
+  }
+
   protected pathFromPackage(pkg: Package): string {
     return pkg.location;
   }
