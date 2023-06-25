@@ -111,6 +111,8 @@ export class CargoWorkspace extends WorkspacePlugin<CrateInfo> {
     ).flat();
     members.push(ROOT_PROJECT_PATH);
 
+    this.logger.info(`candidates ${candidates}`);
+
     for (const path of members) {
       const manifestPath = addPath(path, 'Cargo.toml');
       this.logger.info(`looking for candidate with path: ${path}`);
@@ -132,7 +134,7 @@ export class CargoWorkspace extends WorkspacePlugin<CrateInfo> {
         );
         continue;
       }
-      if (candidate) {
+      if (candidate && (manifest.package?.publish ?? true)) {
         candidatesByPackage[packageName] = candidate;
       }
 
