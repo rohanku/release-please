@@ -331,7 +331,7 @@ export class CargoWorkspace extends WorkspacePlugin<CrateInfo> {
     for (const crateInfo of allPackages) {
       const allDeps = Object.keys({
         ...(crateInfo.manifest.dependencies ?? {}),
-        ...(crateInfo.manifest['dev-dependencies'] ?? {}),
+        // ...(crateInfo.manifest['dev-dependencies'] ?? {}),
         ...(crateInfo.manifest['build-dependencies'] ?? {}),
       });
 
@@ -343,7 +343,7 @@ export class CargoWorkspace extends WorkspacePlugin<CrateInfo> {
           allDeps.push(
             ...Object.keys({
               ...(target.dependencies ?? {}),
-              ...(target['dev-dependencies'] ?? {}),
+              // ...(target['dev-dependencies'] ?? {}),
               ...(target['build-dependencies'] ?? {}),
             })
           );
