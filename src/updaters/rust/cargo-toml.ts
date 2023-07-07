@@ -69,13 +69,14 @@ export class CargoToml extends DefaultUpdater {
           continue; // to next depKind
         }
 
+        let updatedVersion = depKind === 'dev-dependencies' ? `<=${pkgVersion.toString()}` : pkgVersion.toString();
         logger.info(
-          `updating ${depKind}.${pkgName} from ${dep.version} to ${pkgVersion}`
+          `updating ${depKind}.${pkgName} from ${dep.version} to ${updatedVersion}`
         );
         payload = replaceTomlValue(
           payload,
           [depKind, pkgName, 'version'],
-          pkgVersion.toString()
+          updatedVersion
         );
       }
 
@@ -102,13 +103,14 @@ export class CargoToml extends DefaultUpdater {
               continue; // to next depKind
             }
 
+            let updatedVersion = depKind === 'dev-dependencies' ? `<=${pkgVersion.toString()}` : pkgVersion.toString();
             logger.info(
-              `updating  target.${targetName}.${depKind}.${pkgName} from ${dep.version} to ${pkgVersion}`
+              `updating  target.${targetName}.${depKind}.${pkgName} from ${dep.version} to ${updatedVersion}`
             );
             payload = replaceTomlValue(
               payload,
               ['target', targetName, depKind, pkgName, 'version'],
-              pkgVersion.toString()
+              updatedVersion
             );
           }
         }

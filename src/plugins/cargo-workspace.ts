@@ -423,9 +423,6 @@ function getChangelogDepsNotes(
     updates: DepUpdates
   ) => {
     for (const depType of depTypes) {
-      // Skip updating dev dependencies as they don't matter for publishing purposes.
-      if (depType === 'dev-dependencies') { continue; }
-
       const depUpdates = [];
       const pkgDepTypes = updatedScope[depType];
 
