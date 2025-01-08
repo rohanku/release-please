@@ -22,6 +22,7 @@ import {
 import {GitHub} from '../github';
 import {ManifestPlugin} from '../plugin';
 import {LinkedVersions} from '../plugins/linked-versions';
+import {SubstrateWorkspace} from '../plugins/substrate-workspace';
 import {CargoWorkspace} from '../plugins/cargo-workspace';
 import {NodeWorkspace} from '../plugins/node-workspace';
 import {VersioningStrategyType} from './versioning-strategy-factory';
@@ -66,6 +67,16 @@ const pluginFactories: Record<string, PluginBuilder> = {
     ),
   'cargo-workspace': options =>
     new CargoWorkspace(
+      options.github,
+      options.targetBranch,
+      options.repositoryConfig,
+      {
+        ...options,
+        ...(options.type as WorkspacePluginOptions),
+      }
+    ),
+  'substrate-workspace': options =>
+    new SubstrateWorkspace(
       options.github,
       options.targetBranch,
       options.repositoryConfig,

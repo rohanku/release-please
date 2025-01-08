@@ -978,12 +978,12 @@ export class Manifest {
     pullRequest: ReleasePullRequest
   ): Promise<PullRequest | undefined> {
     // If unchanged, no need to push updates
-    if (existing.body === pullRequest.body.toString()) {
-      this.logger.info(
-        `PR https://github.com/${this.repository.owner}/${this.repository.repo}/pull/${existing.number} remained the same`
-      );
-      return undefined;
-    }
+    // if (existing.body === pullRequest.body.toString()) {
+    //   this.logger.info(
+    //     `PR https://github.com/${this.repository.owner}/${this.repository.repo}/pull/${existing.number} remained the same`
+    //   );
+    //   return undefined;
+    // }
     const updatedPullRequest = await this.github.updatePullRequest(
       existing.number,
       pullRequest,

@@ -56,8 +56,8 @@ export interface AllPackages<T> {
  */
 export abstract class WorkspacePlugin<T> extends ManifestPlugin {
   private updateAllPackages: boolean;
-  private manifestPath: string;
-  private merge: boolean;
+  protected manifestPath: string;
+  protected merge: boolean;
   constructor(
     github: GitHub,
     targetBranch: string,

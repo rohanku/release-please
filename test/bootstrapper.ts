@@ -81,6 +81,6 @@ describe('Bootstrapper', () => {
     );
     expect(update.createIfMissing).to.be.true;
     const newContent = update.updater.updateContent(undefined);
-    snapshot(newContent);
+    snapshot(newContent!);
   });
 });

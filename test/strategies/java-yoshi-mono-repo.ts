@@ -376,7 +376,7 @@ describe('JavaYoshiMonoRepo', () => {
         JSON.stringify({entries: []})
       );
       snapshot(
-        newContent
+        newContent!
           .replace(/\r\n/g, '\n') // make newline consistent regardless of OS.
           .replace(UUID_REGEX, 'abc-123-efd-qwerty')
           .replace(ISO_DATE_REGEX, '2023-01-05T16:42:33.446Z')
@@ -436,7 +436,7 @@ describe('JavaYoshiMonoRepo', () => {
         JSON.stringify({entries: []})
       );
       snapshot(
-        newContent
+        newContent!
           .replace(/\r\n/g, '\n') // make newline consistent regardless of OS.
           .replace(UUID_REGEX, 'abc-123-efd-qwerty')
           .replace(ISO_DATE_REGEX, '2023-01-05T16:42:33.446Z')
@@ -487,7 +487,7 @@ describe('JavaYoshiMonoRepo', () => {
         JSON.stringify({entries: []})
       );
       snapshot(
-        newContent
+        newContent!
           .replace(/\r\n/g, '\n') // make newline consistent regardless of OS.
           .replace(UUID_REGEX, 'abc-123-efd-qwerty')
           .replace(ISO_DATE_REGEX, '2023-01-05T16:42:33.446Z')

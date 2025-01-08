@@ -237,7 +237,7 @@ export class MavenWorkspace extends WorkspacePlugin<MavenArtifact> {
           const updatedArtifact = parseMavenArtifact(
             pomUpdate.updater.updateContent(
               pomUpdate.cachedFileContents.parsedContent
-            ),
+            )!,
             pomUpdate.path,
             this.logger
           );

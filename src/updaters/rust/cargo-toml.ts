@@ -120,3 +120,116 @@ export class CargoToml extends DefaultUpdater {
     return payload;
   }
 }
+
+/**
+ * Removes path dependencies from `Cargo.toml` manifests.
+ */
+export class CargoTomlRemovePaths extends DefaultUpdater {
+  /**
+   * Given initial file contents, return updated contents.
+   * @param {string} content The initial content
+   * @returns {string} The updated content
+   */
+  updateContent(content: string, logger: Logger = defaultLogger): string {
+    let payload = content;
+
+    if (!this.versionsMap) {
+      throw new Error('updateContent called with no versions');
+    }
+
+    const parsed = parseCargoManifest(payload);
+    if (!parsed.package) {
+      const msg = 'is not a package manifest (might be a cargo workspace)';
+      logger.error(msg);
+      throw new Error(msg);
+    }
+
+    for (const [pkgName, pkgVersion] of this.versionsMap) {
+      for (const depKind of DEP_KINDS) {
+        const deps = parsed[depKind];
+
+        if (!deps) {
+          continue; // to next depKind
+        }
+
+        if (!deps[pkgName]) {
+          continue; // to next depKind
+        }
+
+        const dep = deps[pkgName];
+
+        if (typeof dep === 'string' || typeof dep.path === 'undefined') {
+          logger.info(`skipping ${depKind}.${pkgName} (no path set)`);
+          continue; // to next depKind
+        }
+
+        payload = replaceTomlValue(
+          payload,
+          [depKind, pkgName, 'path'],
+          null
+        );
+        console.log(payload);
+      }
+
+      // Update platform-specific dependencies
+      if (parsed.target) {
+        for (const targetName of Object.keys(parsed.target)) {
+          for (const depKind of DEP_KINDS) {
+            const deps = parsed.target[targetName][depKind];
+
+            if (!deps) {
+              continue; // to next depKind
+            }
+
+            if (!deps[pkgName]) {
+              continue; // to next depKind
+            }
+
+            const dep = deps[pkgName];
+
+            if (typeof dep === 'string' || typeof dep.path === 'undefined') {
+              logger.info(
+                `skipping target.${targetName}.${depKind}.${pkgName} in`
+              );
+              continue; // to next depKind
+            }
+            payload = replaceTomlValue(
+              payload,
+              ['target', targetName, depKind, pkgName, 'path'],
+              null
+            );
+            console.log(payload);
+          }
+        }
+      }
+    }
+
+    return payload;
+  }
+}
+
+/**
+ * Updates `Cargo.toml` manifests, preserving formatting and comments.
+ */
+export class CargoWorkspaceMembers {
+  members: string[];
+  constructor(members: string[]) {
+      this.members = members;
+  }
+  /**
+   * Given initial file contents, return updated contents.
+   * @param {string} content The initial content
+   * @returns {string} The updated content
+   */
+  updateContent(content: string, logger: Logger = defaultLogger): string {
+    let payload = content;
+
+    payload = replaceTomlValue(
+      payload,
+      ['workspace', 'members'],
+      this.members
+    );
+
+    return payload;
+  }
+}
