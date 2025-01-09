@@ -168,7 +168,6 @@ export class CargoTomlRemovePaths extends DefaultUpdater {
           [depKind, pkgName, 'path'],
           null
         );
-        console.log(payload);
       }
 
       // Update platform-specific dependencies
@@ -198,7 +197,6 @@ export class CargoTomlRemovePaths extends DefaultUpdater {
               ['target', targetName, depKind, pkgName, 'path'],
               null
             );
-            console.log(payload);
           }
         }
       }
