@@ -4,7 +4,10 @@ import {VersionsMap} from '../version';
 import {RawContent} from '../updaters/raw-content';
 import {RemoveFile} from '../updaters/remove-file';
 import {CompositeUpdater} from '../updaters/composite';
-import {CargoTomlRemovePaths, CargoWorkspaceMembers} from '../updaters/rust/cargo-toml';
+import {
+  CargoTomlRemovePaths,
+  CargoWorkspaceMembers,
+} from '../updaters/rust/cargo-toml';
 import {ReleasePleaseManifest} from '../updaters/release-please-manifest';
 import {Merge} from './merge';
 import {Update} from '../update';
@@ -38,9 +41,8 @@ export class SubstrateWorkspace extends CargoWorkspace {
     }
 
     this.logger.info('Building list of all packages');
-    const {allPackages, candidatesByPackage} = await this.buildAllPackages(
-      inScopeCandidates
-    );
+    const {allPackages, candidatesByPackage} =
+      await this.buildAllPackages(inScopeCandidates);
     this.logger.info(
       `Building dependency graph for ${allPackages.length} packages`
     );
@@ -132,17 +134,18 @@ export class SubstrateWorkspace extends CargoWorkspace {
       `Post-processing ${newCandidates.length} in-scope candidates`
     );
     newCandidates = this.postProcessCandidates(newCandidates, updatedVersions);
-    this.logger.info(
-      "Updating docs and examples"
+    this.logger.info('Updating docs and examples');
+    newCandidates = await this.updateDocsAndExamples(
+      newCandidates,
+      updatedVersions
     );
-    newCandidates = await this.updateDocsAndExamples(newCandidates, updatedVersions);
 
     return [...outOfScopeCandidates, ...newCandidates];
   }
 
   async updateDocsAndExamples(
     candidates: CandidateReleasePullRequest[],
-    updatedVersions: VersionsMap,
+    updatedVersions: VersionsMap
   ): Promise<CandidateReleasePullRequest[]> {
     let rootCandidate = candidates.find(c => c.path === ROOT_PROJECT_PATH);
     if (!rootCandidate) {
@@ -154,103 +157,161 @@ export class SubstrateWorkspace extends CargoWorkspace {
       return candidates;
     }
 
-    await this.overwriteDirectory(rootCandidate, "docs/docusaurus/docs", "docs/docusaurus/versioned_docs/version-release", ["docs-config.json"]);
-    await this.overwriteDirectory(rootCandidate, "examples/latest", "examples/release", ["Cargo.toml"]);
-    await this.removeReleaseExamplePathDependencies(rootCandidate, updatedVersions);
+    await this.overwriteDirectory(
+      rootCandidate,
+      'docs/docusaurus/docs',
+      'docs/docusaurus/versioned_docs/version-release',
+      ['docs-config.json']
+    );
+    await this.overwriteDirectory(
+      rootCandidate,
+      'examples/latest',
+      'examples/release',
+      ['Cargo.toml', 'Justfile']
+    );
+    await this.removeReleaseExamplePathDependencies(
+      rootCandidate,
+      updatedVersions
+    );
     await this.updateReleaseExampleWorkspaceToml(rootCandidate);
+
+    this.logger.warn('test', rootCandidate.pullRequest.updates);
 
     return candidates;
   }
 
-  async updateReleaseExampleWorkspaceToml(rootCandidate: CandidateReleasePullRequest) {
-      let targetFiles = await this.github.findFilesByGlobAndRef("**/Cargo.toml", this.targetBranch, "examples/latest");
-      let members = targetFiles.map((file) => {
-          return file.slice(0, -"/Cargo.toml".length);
-      });
-      rootCandidate.pullRequest.updates.push({
-          path: "examples/release/Cargo.toml",
-          createIfMissing: true,
-          updater: new CargoWorkspaceMembers(members),
-      });
+  async updateReleaseExampleWorkspaceToml(
+    rootCandidate: CandidateReleasePullRequest
+  ) {
+    let targetFiles = await this.github.findFilesByGlobAndRef(
+      '**/Cargo.toml',
+      this.targetBranch,
+      'examples/latest'
+    );
+    let members = targetFiles.map(file => {
+      return file.slice(0, -'/Cargo.toml'.length);
+    });
+    rootCandidate.pullRequest.updates.push({
+      path: 'examples/release/Cargo.toml',
+      createIfMissing: true,
+      updater: new CargoWorkspaceMembers(members),
+    });
   }
 
-  async removeReleaseExamplePathDependencies(rootCandidate: CandidateReleasePullRequest, updatedVersions: VersionsMap) {
-      let targetFiles = await this.github.findFilesByGlobAndRef("**/Cargo.toml", this.targetBranch, "examples/latest");
-      targetFiles.forEach((file) => {
-        file = "examples/release/" + file;
-        const fileUpdate =
-            rootCandidate.pullRequest.updates.find(
-                update => update.path === file
-            );
-        if (fileUpdate) {
-            fileUpdate.updater = new CompositeUpdater(fileUpdate.updater, new CargoTomlRemovePaths({
-              version: rootCandidate.pullRequest.version!,
-              versionsMap: updatedVersions,
-            }));
-        }
-      });
-  }
-
-  async getFileContent(fileUpdate: Update | null, sourcePath: string): Promise<string | null> {
-      try {
-        return (fileUpdate?.cachedFileContents ||
-            (await this.github.getFileContentsOnBranch(
-            sourcePath,
-            this.targetBranch
-            ))).parsedContent;
-      } catch (e) {
-        if (e instanceof FileNotFoundError) {
-            return (fileUpdate && fileUpdate.createIfMissing) ? '' : null;
-        }
-        throw e;
+  async removeReleaseExamplePathDependencies(
+    rootCandidate: CandidateReleasePullRequest,
+    updatedVersions: VersionsMap
+  ) {
+    let targetFiles = await this.github.findFilesByGlobAndRef(
+      '**/Cargo.toml',
+      this.targetBranch,
+      'examples/latest'
+    );
+    targetFiles.forEach(file => {
+      file = 'examples/release/' + file;
+      const fileUpdate = rootCandidate.pullRequest.updates.find(
+        update => update.path === file
+      );
+      if (fileUpdate) {
+        fileUpdate.updater = new CompositeUpdater(
+          fileUpdate.updater,
+          new CargoTomlRemovePaths({
+            version: rootCandidate.pullRequest.version!,
+            versionsMap: updatedVersions,
+          })
+        );
       }
+    });
   }
 
-  async overwriteFile(rootCandidate: CandidateReleasePullRequest, sourcePath: string, targetPath: string) {
-      this.logger.info(`Overwriting ${sourcePath} with ${targetPath}`);
-      // Apply updates attached to the source file in `rootCandidate`, 
-      // then overwrite the target file with the final content.
-      const fileUpdate =
-          rootCandidate.pullRequest.updates.find(
-              update => update.path === sourcePath
-          ) ?? null;
-  
-      const fileContent = await this.getFileContent(fileUpdate, sourcePath);
-      const newFileContent = fileContent ? (fileUpdate ? fileUpdate.updater.updateContent(fileContent) : fileContent) : null;
-  
-      let update = {
-          path: targetPath,
-          createIfMissing: true,
-          updater: newFileContent ? new RawContent(newFileContent) : new RemoveFile(),
-      };
-      rootCandidate.pullRequest.updates.push(update);
+  async getFileContent(
+    fileUpdate: Update | null,
+    sourcePath: string
+  ): Promise<string | null> {
+    try {
+      return (
+        fileUpdate?.cachedFileContents ||
+        (await this.github.getFileContentsOnBranch(
+          sourcePath,
+          this.targetBranch
+        ))
+      ).parsedContent;
+    } catch (e) {
+      if (e instanceof FileNotFoundError) {
+        return fileUpdate && fileUpdate.createIfMissing ? '' : null;
+      }
+      throw e;
+    }
   }
-  
-  async overwriteDirectory(rootCandidate: CandidateReleasePullRequest, sourceDir: string, targetDir: string, exceptions: string[] = []) {
-      let targetFiles = await this.github.findFilesByGlobAndRef("**/*", this.targetBranch, targetDir);
-  
-      // Overwrite or remove files in `targetDir`.
-      targetFiles.forEach((file) => {
-          const sourcePath = sourceDir + '/' + file;
-          const targetPath = targetDir + '/' + file;
-          if (!exceptions.includes(file)) {
-            this.overwriteFile(rootCandidate, sourcePath, targetPath);
-          }
-        });
-  
-      // Create new files in `targetDir` if they are present only in `sourceDir`.
-      let sourceFiles = await this.github.findFilesByGlobAndRef("**/*", this.targetBranch, sourceDir);
-  
-      sourceFiles.forEach((file) => {
-          const sourcePath = sourceDir + '/' + file;
-          const targetPath = targetDir + '/' + file;
-          const exists =
-              rootCandidate.pullRequest.updates.find(
-                  update => update.path === targetPath
-              );
-          if (!exists && !exceptions.includes(file)) {
-              this.overwriteFile(rootCandidate, sourcePath, targetPath);
-          }
-      });
+
+  async overwriteFile(
+    rootCandidate: CandidateReleasePullRequest,
+    sourcePath: string,
+    targetPath: string
+  ) {
+    this.logger.info(`Overwriting ${targetPath} with ${sourcePath}`);
+    // Apply updates attached to the source file in `rootCandidate`,
+    // then overwrite the target file with the final content.
+    const fileUpdate =
+      rootCandidate.pullRequest.updates.find(
+        update => update.path === sourcePath
+      ) ?? null;
+
+    const fileContent = await this.getFileContent(fileUpdate, sourcePath);
+    const newFileContent = fileContent
+      ? fileUpdate
+        ? fileUpdate.updater.updateContent(fileContent)
+        : fileContent
+      : null;
+
+    let update = {
+      path: targetPath,
+      createIfMissing: true,
+      updater: newFileContent
+        ? new RawContent(newFileContent)
+        : new RemoveFile(),
+    };
+    this.logger.warn('my update', update);
+    rootCandidate.pullRequest.updates.push(update);
+  }
+
+  async overwriteDirectory(
+    rootCandidate: CandidateReleasePullRequest,
+    sourceDir: string,
+    targetDir: string,
+    exceptions: string[] = []
+  ) {
+    let targetFiles = await this.github.findFilesByGlobAndRef(
+      '**/*',
+      this.targetBranch,
+      targetDir
+    );
+
+    // Overwrite or remove files in `targetDir`.
+    for (const file of targetFiles) {
+      const sourcePath = sourceDir + '/' + file;
+      const targetPath = targetDir + '/' + file;
+      if (!exceptions.includes(file)) {
+        await this.overwriteFile(rootCandidate, sourcePath, targetPath);
+      }
+    }
+
+    // Create new files in `targetDir` if they are present only in `sourceDir`.
+    let sourceFiles = await this.github.findFilesByGlobAndRef(
+      '**/*',
+      this.targetBranch,
+      sourceDir
+    );
+
+    for (const file of sourceFiles) {
+      const sourcePath = sourceDir + '/' + file;
+      const targetPath = targetDir + '/' + file;
+      const exists = rootCandidate.pullRequest.updates.find(
+        update => update.path === targetPath
+      );
+      if (!exists && !exceptions.includes(file)) {
+        await this.overwriteFile(rootCandidate, sourcePath, targetPath);
+      }
+    }
   }
 }
