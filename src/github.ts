@@ -1278,9 +1278,9 @@ export class GitHub {
         this.logger
       );
       changes.set(update.path, {
-          content: updatedContent,
-          originalContent: content?.parsedContent || null,
-          mode: content?.mode || DEFAULT_FILE_MODE,
+        content: updatedContent,
+        originalContent: content?.parsedContent || null,
+        mode: content?.mode || DEFAULT_FILE_MODE,
       });
     }
     return changes;

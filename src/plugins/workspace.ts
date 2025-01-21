@@ -96,9 +96,8 @@ export abstract class WorkspacePlugin<T> extends ManifestPlugin {
     }
 
     this.logger.info('Building list of all packages');
-    const {allPackages, candidatesByPackage} = await this.buildAllPackages(
-      inScopeCandidates
-    );
+    const {allPackages, candidatesByPackage} =
+      await this.buildAllPackages(inScopeCandidates);
     this.logger.info(
       `Building dependency graph for ${allPackages.length} packages`
     );

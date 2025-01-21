@@ -56,7 +56,7 @@ declare module '@iarna/toml/lib/toml-parser' {
     ///////////////////////////////
     // Internal parser methods
     ///////////////////////////////
-    
+
     /* ASSIGNMENT: key = value */
     parseAssign(): void;
 
@@ -65,7 +65,7 @@ declare module '@iarna/toml/lib/toml-parser' {
      */
     parseValue(): void;
 
-    parseInlineTableNext (): void;
+    parseInlineTableNext(): void;
 
     call(fn: Function, returnWith: Function): void;
 

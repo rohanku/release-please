@@ -29,11 +29,9 @@ describe('schemas', () => {
     const manifestValidator = ajv.compile(manifestSchema);
     for (const manifestFile of readdirSync(resolve(fixturesPath, 'versions'))) {
       it(`validates ${manifestFile}`, () => {
-        const manifest = require(resolve(
-          fixturesPath,
-          'versions',
-          manifestFile
-        ));
+        const manifest = require(
+          resolve(fixturesPath, 'versions', manifestFile)
+        );
         const result = manifestValidator(manifest);
         expect(result).to.be.true;
         expect(manifestValidator.errors).to.be.null;

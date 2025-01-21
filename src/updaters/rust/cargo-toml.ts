@@ -69,7 +69,10 @@ export class CargoToml extends DefaultUpdater {
           continue; // to next depKind
         }
 
-        let updatedVersion = depKind === 'dev-dependencies' ? `<=${pkgVersion.toString()}` : pkgVersion.toString();
+        let updatedVersion =
+          depKind === 'dev-dependencies'
+            ? `<=${pkgVersion.toString()}`
+            : pkgVersion.toString();
         logger.info(
           `updating ${depKind}.${pkgName} from ${dep.version} to ${updatedVersion}`
         );
@@ -103,7 +106,10 @@ export class CargoToml extends DefaultUpdater {
               continue; // to next depKind
             }
 
-            let updatedVersion = depKind === 'dev-dependencies' ? `<=${pkgVersion.toString()}` : pkgVersion.toString();
+            let updatedVersion =
+              depKind === 'dev-dependencies'
+                ? `<=${pkgVersion.toString()}`
+                : pkgVersion.toString();
             logger.info(
               `updating  target.${targetName}.${depKind}.${pkgName} from ${dep.version} to ${updatedVersion}`
             );
@@ -163,11 +169,7 @@ export class CargoTomlRemovePaths extends DefaultUpdater {
           continue; // to next depKind
         }
 
-        payload = replaceTomlValue(
-          payload,
-          [depKind, pkgName, 'path'],
-          null
-        );
+        payload = replaceTomlValue(payload, [depKind, pkgName, 'path'], null);
       }
 
       // Update platform-specific dependencies
@@ -212,7 +214,7 @@ export class CargoTomlRemovePaths extends DefaultUpdater {
 export class CargoWorkspaceMembers {
   members: string[];
   constructor(members: string[]) {
-      this.members = members;
+    this.members = members;
   }
   /**
    * Given initial file contents, return updated contents.
@@ -222,11 +224,7 @@ export class CargoWorkspaceMembers {
   updateContent(content: string, logger: Logger = defaultLogger): string {
     let payload = content;
 
-    payload = replaceTomlValue(
-      payload,
-      ['workspace', 'members'],
-      this.members
-    );
+    payload = replaceTomlValue(payload, ['workspace', 'members'], this.members);
 
     return payload;
   }

@@ -15,7 +15,7 @@
 import * as TOMLParser from '@iarna/toml/lib/toml-parser';
 import * as TOML from '@iarna/toml';
 
-const CHAR_COMMA = 0x2C
+const CHAR_COMMA = 0x2c;
 const taggedValueMarker = Symbol('__TAGGED_VALUE');
 
 /**
@@ -68,10 +68,10 @@ class TaggedTOMLParser extends TOMLParser {
     return super.parseValue();
   }
 
-  parseInlineTableNext () {
+  parseInlineTableNext() {
     if (this.char === CHAR_COMMA) {
       this.state.__TAGGED_PREV_COMMA = this.pos - 1;
-    } 
+    }
     return super.parseInlineTableNext();
   }
 

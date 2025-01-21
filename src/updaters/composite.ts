@@ -36,7 +36,8 @@ export class CompositeUpdater implements Updater {
   updateContent(content: string | undefined): string | null {
     let newContent: string | null | undefined = content;
     for (const updater of this.updaters) {
-      newContent = newContent !== null ? updater.updateContent(newContent) : newContent;
+      newContent =
+        newContent !== null ? updater.updateContent(newContent) : newContent;
     }
     return newContent || '';
   }
