@@ -175,8 +175,6 @@ export class SubstrateWorkspace extends CargoWorkspace {
     );
     await this.updateReleaseExampleWorkspaceToml(rootCandidate);
 
-    this.logger.warn('test', rootCandidate.pullRequest.updates);
-
     return candidates;
   }
 
@@ -271,7 +269,6 @@ export class SubstrateWorkspace extends CargoWorkspace {
         ? new RawContent(newFileContent)
         : new RemoveFile(),
     };
-    this.logger.warn('my update', update);
     rootCandidate.pullRequest.updates.push(update);
   }
 
