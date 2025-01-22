@@ -518,5 +518,5 @@ function buildMockPackageUpdate(
 async function renderUpdate(github: GitHub, update: Update): Promise<string> {
   const fileContents =
     update.cachedFileContents || (await github.getFileContents(update.path));
-  return update.updater.updateContent(fileContents.parsedContent);
+  return update.updater.updateContent(fileContents.parsedContent)!;
 }

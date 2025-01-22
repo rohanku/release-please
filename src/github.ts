@@ -448,9 +448,9 @@ export class GitHub {
       cursor,
       owner: this.repository.owner,
       repo: this.repository.repo,
-      num: 25,
+      num: 15,
       targetBranch,
-      maxFilesChanged: 100, // max is 100
+      maxFilesChanged: 50, // max is 100
     };
     const response = await this.graphqlRequest({
       query,
@@ -1277,13 +1277,11 @@ export class GitHub {
         contentText,
         this.logger
       );
-      if (updatedContent) {
-        changes.set(update.path, {
-          content: updatedContent,
-          originalContent: content?.parsedContent || null,
-          mode: content?.mode || DEFAULT_FILE_MODE,
-        });
-      }
+      changes.set(update.path, {
+        content: updatedContent,
+        originalContent: content?.parsedContent || null,
+        mode: content?.mode || DEFAULT_FILE_MODE,
+      });
     }
     return changes;
   }

@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {JsonMap} from '@iarna/toml';
 import * as TOMLParser from '@iarna/toml/lib/toml-parser';
+import * as TOML from '@iarna/toml';
 
+const CHAR_COMMA = 0x2c;
 const taggedValueMarker = Symbol('__TAGGED_VALUE');
 
 /**
@@ -24,6 +25,12 @@ const taggedValueMarker = Symbol('__TAGGED_VALUE');
 interface TaggedValue {
   /** Type marker */
   [taggedValueMarker]: true;
+
+  /** Byte offset of the comma before the assign statement */
+  prev_comma?: number;
+
+  /** Byte offset of the start of the assign statement */
+  assign_start: number;
 
   /** Byte offset of the start of the value */
   start: number;
@@ -41,6 +48,16 @@ interface TaggedValue {
  * replaced.
  */
 class TaggedTOMLParser extends TOMLParser {
+  parseAssign() {
+    // Remember the start position of the value.
+    //
+    // Off-by-one correctness: by this point, `this.pos` points one character
+    // *after* the first character of the value, which is in `this.char`
+    this.state.__TAGGED_ASSIGN_START = this.pos - 1;
+
+    return super.parseAssign();
+  }
+
   parseValue() {
     // Remember the start position of the value.
     //
@@ -51,26 +68,36 @@ class TaggedTOMLParser extends TOMLParser {
     return super.parseValue();
   }
 
-  next(fn: Function) {
+  parseInlineTableNext() {
+    if (this.char === CHAR_COMMA) {
+      this.state.__TAGGED_PREV_COMMA = this.pos - 1;
+    }
+    return super.parseInlineTableNext();
+  }
+
+  call(fn: Function, returnWith: Function) {
     const prevState = this.state;
-    super.next(fn); // `next` returns void
+    super.call(fn, returnWith);
 
     // Carry over the start position. If it wasn't set, (say, if we were parsing
     // something other than a value), we're just assigning `undefined` here.
-    this.state.__TAGGED_START = prevState.__TAGGED_START;
+    this.state.__TAGGED_PREV_COMMA = prevState.__TAGGED_PREV_COMMA;
+    this.state.__TAGGED_ASSIGN_START = prevState.__TAGGED_ASSIGN_START;
   }
 
   return(value: unknown) {
     const prevState = this.state;
     super.return(value); // `return` returns void
 
-    if (prevState.__TAGGED_START && typeof this.state.returned !== 'object') {
+    if (prevState.__TAGGED_ASSIGN_START && prevState.__TAGGED_START) {
       // If the parser we just returned from remembered a start position,
       // tag the returned value with "start" and "end".
       // Note that we don't tag objects to avoid encountering multiple tagged
       // values when replacing later on.
       const taggedValue: TaggedValue = {
         [taggedValueMarker]: true,
+        prev_comma: prevState.__TAGGED_PREV_COMMA,
+        assign_start: prevState.__TAGGED_ASSIGN_START,
         start: prevState.__TAGGED_START,
         end: this.pos,
         value: this.state.returned,
@@ -89,7 +116,7 @@ class TaggedTOMLParser extends TOMLParser {
 export function parseWith(
   input: string,
   parserType: typeof TOMLParser = TaggedTOMLParser
-): JsonMap {
+): TOML.JsonMap {
   const parser = new parserType();
   parser.parse(input);
   return parser.finish();
@@ -113,12 +140,12 @@ function isTaggedValue(x: unknown): x is TaggedValue {
  * that value without modifying the formatting.
  * @param input A string that's valid TOML
  * @param path Path to a value to replace. When replacing 'deps.tokio.version', pass ['deps', 'tokio', 'version']. The value must already exist.
- * @param newValue The value to replace the value at `path` with. Is passed through `JSON.stringify()` when replacing: strings will end up being double-quoted strings, properly escaped. Numbers will be numbers.
+ * @param newValue The value to replace the value at `path` with. Is passed through `TOML.stringify()` when replacing: strings will end up being double-quoted strings, properly escaped. Numbers will be numbers.
  */
 export function replaceTomlValue(
   input: string,
   path: (string | number)[],
-  newValue: string
+  newValue: TOML.AnyJson | null
 ) {
   // our pointer into the object "tree", initially points to the root.
   let current = parseWith(input, TaggedTOMLParser) as Record<string, unknown>;
@@ -129,15 +156,15 @@ export function replaceTomlValue(
     const key = path[i];
 
     // // We may encounter tagged values when descending through the object tree
-    // if (isTaggedValue(current)) {
-    //   if (!current.value || typeof current.value !== 'object') {
-    //     const msg = `partial path does not lead to table: ${path
-    //       .slice(0, i)
-    //       .join('.')}`;
-    //     throw new Error(msg);
-    //   }
-    //   current = current.value as Record<string, unknown>;
-    // }
+    if (isTaggedValue(current)) {
+      if (!current.value || typeof current.value !== 'object') {
+        const msg = `partial path does not lead to table: ${path
+          .slice(0, i)
+          .join('.')}`;
+        throw new Error(msg);
+      }
+      current = current.value as Record<string, unknown>;
+    }
 
     const next = current[key];
 
@@ -145,7 +172,7 @@ export function replaceTomlValue(
       const msg = `path not found in object: ${path.slice(0, i + 1).join('.')}`;
       throw new Error(msg);
     }
-    current = next as JsonMap;
+    current = next as TOML.JsonMap;
   }
 
   if (!isTaggedValue(current)) {
@@ -153,9 +180,17 @@ export function replaceTomlValue(
     throw new Error(msg);
   }
 
-  const before = input.slice(0, current.start);
-  const after = input.slice(current.end);
-  const output = before + JSON.stringify(newValue) + after;
+  let output;
+
+  if (newValue) {
+    const before = input.slice(0, current.start);
+    const after = input.slice(current.end);
+    output = before + TOML.stringify.value(newValue) + after;
+  } else {
+    const before = input.slice(0, current.prev_comma ?? current.assign_start);
+    const after = input.slice(current.end);
+    output = before + after;
+  }
 
   try {
     parseWith(output, TOMLParser);

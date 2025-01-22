@@ -44,5 +44,5 @@ export interface Updater {
    * @param {string} content The initial content
    * @returns {string} The updated content
    */
-  updateContent(content: string | undefined, logger?: Logger): string;
+  updateContent(content: string | undefined, logger?: Logger): string | null;
 }

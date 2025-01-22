@@ -871,9 +871,8 @@ export class Manifest {
         hasAllLabels(this.labels, openPullRequest.labels) ||
         hasAllLabels(this.snapshotLabels, openPullRequest.labels)
       ) {
-        const body = await this.pullRequestOverflowHandler.parseOverflow(
-          openPullRequest
-        );
+        const body =
+          await this.pullRequestOverflowHandler.parseOverflow(openPullRequest);
         if (body) {
           // maybe replace with overflow body
           openPullRequests.push({
@@ -903,9 +902,10 @@ export class Manifest {
         hasAllLabels([SNOOZE_LABEL], closedPullRequest.labels) &&
         BranchName.parse(closedPullRequest.headBranchName, this.logger)
       ) {
-        const body = await this.pullRequestOverflowHandler.parseOverflow(
-          closedPullRequest
-        );
+        const body =
+          await this.pullRequestOverflowHandler.parseOverflow(
+            closedPullRequest
+          );
         if (body) {
           // maybe replace with overflow body
           snoozedPullRequests.push({
@@ -944,9 +944,8 @@ export class Manifest {
       return await this.maybeUpdateSnoozedPullRequest(snoozed, pullRequest);
     }
 
-    const body = await this.pullRequestOverflowHandler.handleOverflow(
-      pullRequest
-    );
+    const body =
+      await this.pullRequestOverflowHandler.handleOverflow(pullRequest);
     const message = this.signoffUser
       ? signoffCommitMessage(pullRequest.title.toString(), this.signoffUser)
       : pullRequest.title.toString();
@@ -978,12 +977,12 @@ export class Manifest {
     pullRequest: ReleasePullRequest
   ): Promise<PullRequest | undefined> {
     // If unchanged, no need to push updates
-    if (existing.body === pullRequest.body.toString()) {
-      this.logger.info(
-        `PR https://github.com/${this.repository.owner}/${this.repository.repo}/pull/${existing.number} remained the same`
-      );
-      return undefined;
-    }
+    // if (existing.body === pullRequest.body.toString()) {
+    //   this.logger.info(
+    //     `PR https://github.com/${this.repository.owner}/${this.repository.repo}/pull/${existing.number} remained the same`
+    //   );
+    //   return undefined;
+    // }
     const updatedPullRequest = await this.github.updatePullRequest(
       existing.number,
       pullRequest,

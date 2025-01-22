@@ -33,11 +33,13 @@ export class CompositeUpdater implements Updater {
    * @param {string} content The initial content
    * @returns {string} The updated content
    */
-  updateContent(content: string | undefined): string {
+  updateContent(content: string | undefined): string | null {
+    let newContent: string | null | undefined = content;
     for (const updater of this.updaters) {
-      content = updater.updateContent(content);
+      newContent =
+        newContent !== null ? updater.updateContent(newContent) : newContent;
     }
-    return content || '';
+    return newContent || '';
   }
 }
 

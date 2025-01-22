@@ -31,8 +31,11 @@ declare module '@iarna/toml/lib/toml-parser' {
 
       /// Internal marker used to remember the start of values,
       /// not set by `@iarna/toml` itself.
+      __TAGGED_PREV_COMMA?: number;
+      __TAGGED_ASSIGN_START?: number;
       __TAGGED_START?: number;
     };
+    char: number;
 
     constructor();
 
@@ -54,16 +57,17 @@ declare module '@iarna/toml/lib/toml-parser' {
     // Internal parser methods
     ///////////////////////////////
 
+    /* ASSIGNMENT: key = value */
+    parseAssign(): void;
+
     /**
      * Parses any value (string, number, boolean, date, etc.)
      */
     parseValue(): void;
 
-    /**
-     * Specifies the next parser to be run by setting `this.state.parser`,
-     * called by `goto()`, `call()`, etc.
-     */
-    next(fn: Function): void;
+    parseInlineTableNext(): void;
+
+    call(fn: Function, returnWith: Function): void;
 
     /**
      * Called when a parser ends, returns either @value or `this.state.buf`
