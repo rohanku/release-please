@@ -272,17 +272,29 @@ export class SubstrateWorkspace extends CargoWorkspace {
     rootCandidate.pullRequest.updates.push(update);
   }
 
+  async findAllFilesInDir(dir: string): Promise<Set<string>> {
+    let files = new Set(
+      await this.github.findFilesByGlobAndRef(
+        '**/*',
+        this.targetBranch,
+        dir
+      )
+    );
+
+    for (const file of files) {
+      files.delete(file.substring(0, file.lastIndexOf('/')));
+    }
+
+    return files;
+  }
+
   async overwriteDirectory(
     rootCandidate: CandidateReleasePullRequest,
     sourceDir: string,
     targetDir: string,
     exceptions: string[] = []
   ) {
-    let targetFiles = await this.github.findFilesByGlobAndRef(
-      '**/*',
-      this.targetBranch,
-      targetDir
-    );
+    let targetFiles = await this.findAllFilesInDir(targetDir);
 
     // Overwrite or remove files in `targetDir`.
     for (const file of targetFiles) {
@@ -294,11 +306,7 @@ export class SubstrateWorkspace extends CargoWorkspace {
     }
 
     // Create new files in `targetDir` if they are present only in `sourceDir`.
-    let sourceFiles = await this.github.findFilesByGlobAndRef(
-      '**/*',
-      this.targetBranch,
-      sourceDir
-    );
+    let sourceFiles = await this.findAllFilesInDir(sourceDir);
 
     for (const file of sourceFiles) {
       const sourcePath = sourceDir + '/' + file;
