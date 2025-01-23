@@ -34,11 +34,16 @@ export interface Update {
   updater: Updater;
 }
 
+export type Encoding = 'base64' | 'utf-8';
+
 /**
  * An updater is responsible for updating code for a file.
  * Given initial file contents, return updated contents.
  */
 export interface Updater {
+  // The encoding of the outputted content. If `base64`, cannot be chained before
+  // other updaters.
+  encoding?: Encoding;
   /**
    * Given initial file contents, return updated contents.
    * @param {string} content The initial content

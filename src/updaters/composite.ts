@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {Updater, Update} from '../update';
+import {Updater, Encoding, Update} from '../update';
 
 /**
  * The CompositeUpdater chains 0...n updaters and updates
@@ -20,12 +20,21 @@ import {Updater, Update} from '../update';
  */
 export class CompositeUpdater implements Updater {
   readonly updaters: Updater[];
+  encoding?: Encoding;
   /**
    * Instantiate a new CompositeUpdater
    * @param {Updater[]} updaters The updaters to chain together
    */
   constructor(...updaters: Updater[]) {
+    for (const updater of updaters.slice(0, -1)) {
+      if (updater.encoding === 'base64') {
+        throw 'Cannot chain updaters after an updater that returns base64 content';
+      }
+    }
     this.updaters = updaters;
+    if (updaters[updaters.length - 1]) {
+      this.encoding = updaters[updaters.length - 1].encoding;
+    }
   }
 
   /**

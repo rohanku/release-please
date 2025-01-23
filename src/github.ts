@@ -1273,13 +1273,15 @@ export class GitHub {
       const contentText = content
         ? Buffer.from(content.content, 'base64').toString('utf8')
         : undefined;
-      const updatedContent = update.updater.updateContent(
+      let updatedContent = update.updater.updateContent(
         contentText,
         this.logger
       );
+      let encoding = update.updater.encoding || 'utf-8';
       changes.set(update.path, {
         content: updatedContent,
-        originalContent: content?.parsedContent || null,
+        encoding: encoding,
+        originalContent: (encoding === 'base64' ? content?.content : content?.parsedContent) || null,
         mode: content?.mode || DEFAULT_FILE_MODE,
       });
     }

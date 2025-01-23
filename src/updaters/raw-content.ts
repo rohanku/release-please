@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {Updater} from '../update';
+import {Encoding, Updater} from '../update';
 
 /**
  * This updater ignores previous content and writes the provided
@@ -20,12 +20,14 @@ import {Updater} from '../update';
  */
 export class RawContent implements Updater {
   rawContent: string;
+  encoding: Encoding;
   /**
    * Create a new RawContent instance
    * @param {string} rawContent The raw content to set as the contents.
    */
-  constructor(rawContent: string) {
+  constructor(rawContent: string, encoding: Encoding = 'utf-8') {
     this.rawContent = rawContent;
+    this.encoding = encoding;
   }
 
   /**
