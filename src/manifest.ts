@@ -253,7 +253,7 @@ export const DEFAULT_RELEASE_PLEASE_CONFIG = 'release-please-config.json';
 export const DEFAULT_RELEASE_PLEASE_MANIFEST = '.release-please-manifest.json';
 export const ROOT_PROJECT_PATH = '.';
 export const DEFAULT_COMPONENT_NAME = '';
-export const DEFAULT_LABELS = ['autorelease: pending'];
+export const DEFAULT_LABELS = ['autorelease: untagged'];
 export const DEFAULT_RELEASE_LABELS = ['autorelease: tagged'];
 export const DEFAULT_SNAPSHOT_LABELS = ['autorelease: snapshot'];
 export const SNOOZE_LABEL = 'autorelease: snooze';
@@ -1089,6 +1089,7 @@ export class Manifest {
           });
         }
       }
+      await this.github.addIssueLabels(['autorelease: merged'], pullRequest.number);
     }
 
     return candidateReleases;
