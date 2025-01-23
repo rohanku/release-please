@@ -254,7 +254,7 @@ export const DEFAULT_RELEASE_PLEASE_MANIFEST = '.release-please-manifest.json';
 export const ROOT_PROJECT_PATH = '.';
 export const DEFAULT_COMPONENT_NAME = '';
 export const DEFAULT_LABELS = ['autorelease: pending'];
-export const DEFAULT_RELEASE_LABELS = ['autorelease: tagged'];
+export const DEFAULT_RELEASE_LABELS = ['autorelease: merged'];
 export const DEFAULT_SNAPSHOT_LABELS = ['autorelease: snapshot'];
 export const SNOOZE_LABEL = 'autorelease: snooze';
 const DEFAULT_RELEASE_SEARCH_DEPTH = 400;
@@ -614,6 +614,11 @@ export class Manifest {
       } else if (needsBootstrap && commit.sha === this.bootstrapSha) {
         this.logger.info(
           `Needed bootstrapping, found configured bootstrapSha ${this.bootstrapSha}`
+        );
+        break;
+      } else if (commit.pullRequest && hasAllLabels(this.releaseLabels, commit.pullRequest.labels)) {
+        this.logger.info(
+          `Using last commit with an associated PR with appropriate labels as last commit.`
         );
         break;
       } else if (!needsBootstrap && releaseCommitsFound >= expectedShas) {
@@ -1089,7 +1094,6 @@ export class Manifest {
           });
         }
       }
-      await this.github.addIssueLabels(['autorelease: merged'], pullRequest.number);
     }
 
     return candidateReleases;
@@ -1111,6 +1115,16 @@ export class Manifest {
         releasesByPullRequest[release.pullRequest.number].push(release);
       } else {
         releasesByPullRequest[release.pullRequest.number] = [release];
+      }
+    }
+
+    const generator = await this.findMergedReleasePullRequests();
+    for await (const pullRequest of generator) {
+      if (!releasesByPullRequest[pullRequest.number]) {
+        await Promise.all([
+          this.github.removeIssueLabels(this.labels, pullRequest.number),
+          this.github.addIssueLabels(this.releaseLabels, pullRequest.number),
+        ]);
       }
     }
 
