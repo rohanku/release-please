@@ -10,8 +10,14 @@ import {
 } from '../updaters/rust/cargo-toml';
 import {ReleasePleaseManifest} from '../updaters/release-please-manifest';
 import {Merge} from './merge';
-import {Update} from '../update';
+import {Update, Encoding} from '../update';
 import {FileNotFoundError} from '../errors';
+import {isUtf8} from 'node:buffer';
+
+interface FileContent {
+  content: string;
+  encoding: Encoding;
+}
 
 export class SubstrateWorkspace extends CargoWorkspace {
   async run(
@@ -225,18 +231,30 @@ export class SubstrateWorkspace extends CargoWorkspace {
   async getFileContent(
     fileUpdate: Update | null,
     sourcePath: string
-  ): Promise<string | null> {
+  ): Promise<FileContent | null> {
     try {
-      return (
+      let ghContents =
         fileUpdate?.cachedFileContents ||
         (await this.github.getFileContentsOnBranch(
           sourcePath,
           this.targetBranch
-        ))
-      ).parsedContent;
+        ));
+      if (isUtf8(Buffer.from(ghContents.content, 'base64'))) {
+        return {
+          content: ghContents.parsedContent,
+          encoding: 'utf-8',
+        };
+      } else {
+        return {
+          content: ghContents.content,
+          encoding: 'base64',
+        };
+      }
     } catch (e) {
       if (e instanceof FileNotFoundError) {
-        return fileUpdate && fileUpdate.createIfMissing ? '' : null;
+        return fileUpdate && fileUpdate.createIfMissing
+          ? {content: '', encoding: 'utf-8'}
+          : null;
       }
       throw e;
     }
@@ -258,15 +276,18 @@ export class SubstrateWorkspace extends CargoWorkspace {
     const fileContent = await this.getFileContent(fileUpdate, sourcePath);
     const newFileContent = fileContent
       ? fileUpdate
-        ? fileUpdate.updater.updateContent(fileContent)
-        : fileContent
+        ? fileUpdate.updater.updateContent(fileContent.content)
+        : fileContent.content
       : null;
 
     let update = {
       path: targetPath,
       createIfMissing: true,
       updater: newFileContent
-        ? new RawContent(newFileContent)
+        ? new RawContent(
+            newFileContent,
+            fileContent ? fileContent.encoding : 'utf-8'
+          )
         : new RemoveFile(),
     };
     rootCandidate.pullRequest.updates.push(update);
@@ -274,11 +295,7 @@ export class SubstrateWorkspace extends CargoWorkspace {
 
   async findAllFilesInDir(dir: string): Promise<Set<string>> {
     let files = new Set(
-      await this.github.findFilesByGlobAndRef(
-        '**/*',
-        this.targetBranch,
-        dir
-      )
+      await this.github.findFilesByGlobAndRef('**/*', this.targetBranch, dir)
     );
 
     for (const file of files) {
