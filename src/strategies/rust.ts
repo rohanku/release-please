@@ -20,13 +20,33 @@ import {Changelog} from '../updaters/changelog';
 import {CargoToml} from '../updaters/rust/cargo-toml';
 import {CargoLock} from '../updaters/rust/cargo-lock';
 import {CargoManifest, parseCargoManifest} from '../updaters/rust/common';
-import {BaseStrategy, BuildUpdatesOptions} from './base';
+import {BaseStrategy, BuildUpdatesOptions, BaseStrategyOptions} from './base';
 import {VersionsMap, Version} from '../version';
 import {Update} from '../update';
+
+const CHANGELOG_SECTIONS = [
+  {type: 'feat', section: 'Features'},
+  {type: 'fix', section: 'Bug Fixes'},
+  {type: 'perf', section: 'Performance Improvements'},
+  {type: 'deps', section: 'Dependencies'},
+  {type: 'revert', section: 'Reverts'},
+  {type: 'docs', section: 'Documentation'},
+  {type: 'style', section: 'Styles', hidden: true},
+  {type: 'chore', section: 'Miscellaneous Chores', hidden: true},
+  {type: 'refactor', section: 'Code Refactoring', hidden: true},
+  {type: 'test', section: 'Tests', hidden: true},
+  {type: 'build', section: 'Build System', hidden: true},
+  {type: 'ci', section: 'Continuous Integration', hidden: true},
+];
 
 export class Rust extends BaseStrategy {
   private packageManifest?: CargoManifest | null;
   private workspaceManifest?: CargoManifest | null;
+
+  constructor(options: BaseStrategyOptions) {
+    options.changelogSections = options.changelogSections ?? CHANGELOG_SECTIONS;
+    super(options);
+  }
 
   protected async buildUpdates(
     options: BuildUpdatesOptions
