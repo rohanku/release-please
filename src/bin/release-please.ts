@@ -215,8 +215,8 @@ function releaseOptions(yargs: yargs.Argv): yargs.Argv {
       describe: 'comma-separated list of labels to remove to from release PR',
     })
     .option('release-label', {
-      describe: 'set a pull request label other than "autorelease: tagged"',
-      default: 'autorelease: tagged',
+      describe: 'set a pull request label other than "autorelease: merged"',
+      default: 'autorelease: merged',
       type: 'string',
     })
     .option('snapshot-label', {

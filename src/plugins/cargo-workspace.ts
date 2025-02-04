@@ -39,7 +39,7 @@ import {PatchVersionUpdate} from '../versioning-strategy';
 import {CargoLock} from '../updaters/rust/cargo-lock';
 import {ConfigurationError} from '../errors';
 
-interface CrateInfo {
+export interface CrateInfo {
   /**
    * e.g. `crates/crate-a`
    */

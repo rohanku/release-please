@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import {replaceTomlValue} from '../../util/toml-edit';
+import {CrateInfo} from '../../plugins/cargo-workspace';
 import {DEP_KINDS, parseCargoManifest} from './common';
 import {logger as defaultLogger, Logger} from '../../util/logger';
 import {DefaultUpdater} from '../default';
@@ -130,7 +131,11 @@ export class CargoToml extends DefaultUpdater {
 /**
  * Removes path dependencies from `Cargo.toml` manifests.
  */
-export class CargoTomlRemovePaths extends DefaultUpdater {
+export class CargoTomlRemovePaths {
+  allPackages: CrateInfo[];
+  constructor(allPackages: CrateInfo[]) {
+    this.allPackages = allPackages;
+  }
   /**
    * Given initial file contents, return updated contents.
    * @param {string} content The initial content
@@ -139,10 +144,6 @@ export class CargoTomlRemovePaths extends DefaultUpdater {
   updateContent(content: string, logger: Logger = defaultLogger): string {
     let payload = content;
 
-    if (!this.versionsMap) {
-      throw new Error('updateContent called with no versions');
-    }
-
     const parsed = parseCargoManifest(payload);
     if (!parsed.package) {
       const msg = 'is not a package manifest (might be a cargo workspace)';
@@ -150,7 +151,7 @@ export class CargoTomlRemovePaths extends DefaultUpdater {
       throw new Error(msg);
     }
 
-    for (const [pkgName, pkgVersion] of this.versionsMap) {
+    for (const { name } of this.allPackages) {
       for (const depKind of DEP_KINDS) {
         const deps = parsed[depKind];
 
@@ -158,18 +159,18 @@ export class CargoTomlRemovePaths extends DefaultUpdater {
           continue; // to next depKind
         }
 
-        if (!deps[pkgName]) {
+        if (!deps[name]) {
           continue; // to next depKind
         }
 
-        const dep = deps[pkgName];
+        const dep = deps[name];
 
         if (typeof dep === 'string' || typeof dep.path === 'undefined') {
-          logger.info(`skipping ${depKind}.${pkgName} (no path set)`);
+          logger.info(`skipping ${depKind}.${name} (no path set)`);
           continue; // to next depKind
         }
 
-        payload = replaceTomlValue(payload, [depKind, pkgName, 'path'], null);
+        payload = replaceTomlValue(payload, [depKind, name, 'path'], null);
       }
 
       // Update platform-specific dependencies
@@ -182,21 +183,21 @@ export class CargoTomlRemovePaths extends DefaultUpdater {
               continue; // to next depKind
             }
 
-            if (!deps[pkgName]) {
+            if (!deps[name]) {
               continue; // to next depKind
             }
 
-            const dep = deps[pkgName];
+            const dep = deps[name];
 
             if (typeof dep === 'string' || typeof dep.path === 'undefined') {
               logger.info(
-                `skipping target.${targetName}.${depKind}.${pkgName} in`
+                `skipping target.${targetName}.${depKind}.${name} in`
               );
               continue; // to next depKind
             }
             payload = replaceTomlValue(
               payload,
-              ['target', targetName, depKind, pkgName, 'path'],
+              ['target', targetName, depKind, name, 'path'],
               null
             );
           }

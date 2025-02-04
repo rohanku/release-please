@@ -254,7 +254,7 @@ export const DEFAULT_RELEASE_PLEASE_MANIFEST = '.release-please-manifest.json';
 export const ROOT_PROJECT_PATH = '.';
 export const DEFAULT_COMPONENT_NAME = '';
 export const DEFAULT_LABELS = ['autorelease: pending'];
-export const DEFAULT_RELEASE_LABELS = ['autorelease: tagged'];
+export const DEFAULT_RELEASE_LABELS = ['autorelease: merged'];
 export const DEFAULT_SNAPSHOT_LABELS = ['autorelease: snapshot'];
 export const SNOOZE_LABEL = 'autorelease: snooze';
 const DEFAULT_RELEASE_SEARCH_DEPTH = 400;
@@ -323,7 +323,7 @@ export class Manifest {
    * @param {string[]} manifestOptions.labels Labels that denote a pending, untagged release
    *   pull request. Defaults to `[autorelease: pending]`
    * @param {string[]} manifestOptions.releaseLabels Labels to apply to a tagged release
-   *   pull request. Defaults to `[autorelease: tagged]`
+   *   pull request. Defaults to `[autorelease: merged]`
    */
   constructor(
     github: GitHub,
@@ -438,7 +438,7 @@ export class Manifest {
    * @param {string[]} manifestOptions.labels Labels that denote a pending, untagged release
    *   pull request. Defaults to `[autorelease: pending]`
    * @param {string[]} manifestOptions.releaseLabels Labels to apply to a tagged release
-   *   pull request. Defaults to `[autorelease: tagged]`
+   *   pull request. Defaults to `[autorelease: merged]`
    * @returns {Manifest}
    */
   static async fromConfig(

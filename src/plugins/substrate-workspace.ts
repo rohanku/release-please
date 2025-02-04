@@ -1,4 +1,4 @@
-import {CargoWorkspace} from './cargo-workspace';
+import {CargoWorkspace, CrateInfo} from './cargo-workspace';
 import {CandidateReleasePullRequest, ROOT_PROJECT_PATH} from '../manifest';
 import {VersionsMap} from '../version';
 import {RawContent} from '../updaters/raw-content';
@@ -143,7 +143,7 @@ export class SubstrateWorkspace extends CargoWorkspace {
     this.logger.info('Updating docs and examples');
     newCandidates = await this.updateDocsAndExamples(
       newCandidates,
-      updatedVersions
+      allPackages
     );
 
     return [...outOfScopeCandidates, ...newCandidates];
@@ -151,7 +151,7 @@ export class SubstrateWorkspace extends CargoWorkspace {
 
   async updateDocsAndExamples(
     candidates: CandidateReleasePullRequest[],
-    updatedVersions: VersionsMap
+    allPackages: CrateInfo[]
   ): Promise<CandidateReleasePullRequest[]> {
     let rootCandidate = candidates.find(c => c.path === ROOT_PROJECT_PATH);
     if (!rootCandidate) {
@@ -177,7 +177,7 @@ export class SubstrateWorkspace extends CargoWorkspace {
     );
     await this.removeReleaseExamplePathDependencies(
       rootCandidate,
-      updatedVersions
+      allPackages
     );
     await this.updateReleaseExampleWorkspaceToml(rootCandidate);
 
@@ -204,7 +204,7 @@ export class SubstrateWorkspace extends CargoWorkspace {
 
   async removeReleaseExamplePathDependencies(
     rootCandidate: CandidateReleasePullRequest,
-    updatedVersions: VersionsMap
+    allPackages: CrateInfo[]
   ) {
     let targetFiles = await this.github.findFilesByGlobAndRef(
       '**/Cargo.toml',
@@ -219,10 +219,9 @@ export class SubstrateWorkspace extends CargoWorkspace {
       if (fileUpdate) {
         fileUpdate.updater = new CompositeUpdater(
           fileUpdate.updater,
-          new CargoTomlRemovePaths({
-            version: rootCandidate.pullRequest.version!,
-            versionsMap: updatedVersions,
-          })
+          new CargoTomlRemovePaths(
+            allPackages
+          )
         );
       }
     });
